@@ -1,0 +1,71 @@
+# Node.js with React
+# Build a Node.js project that uses React.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+#
+trigger:
+- none
+
+pool: generative-ai
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSource: 'spec'
+    versionSpec: '18'
+  displayName: 'Install Node.js'
+
+- task: CmdLine@2
+  inputs:
+    script: |
+      echo "The following folders/files were created on build"
+      pwd
+      ls -lart
+
+- script: |
+    npm install --force
+    npm run build
+  displayName: 'npm install and build'
+  
+- task: CmdLine@2
+  inputs:
+    script: |
+      echo "The following folders/files were created on build"
+      pwd
+      ls -lart
+      cd build
+      ls -lart
+
+    
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: 'build'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: CmdLine@2
+  inputs:
+    script: |
+      zipinfo $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+
+- task: PublishBuildArtifacts@1
+  displayName: "Publish Artifact: drop"
+  inputs:
+    PathtoPublish: build
+
+# - task: AzureRmWebAppDeployment@4 ##
+#   inputs:
+#     ConnectionType: 'AzureRM'
+#     azureSubscription: 'ms-alliance-sandbox-sub064(d4a31728-9496-430b-9464-1b1c7df4f874)'
+#     appType: 'webAppLinux'
+#     WebAppName: 'vfs-main-ui'
+#     packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+# - task: AzureRmWebAppDeployment@4
+#   inputs:
+#     ConnectionType: 'AzureRM'
+#     azureSubscription: 'ms-alliance-sandbox-sub064(d4a31728-9496-430b-9464-1b1c7df4f874)'
+#     appType: 'webApp'
+#     WebAppName: 'vfs-main-windows'
+#     packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
